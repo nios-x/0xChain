@@ -4,10 +4,123 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
+
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  pic       String?
+  provider  String
+  createdAt DateTime @default(now())
+}
+
+enum ShipmentStatus {
+  CREATED
+  IN_TRANSIT
+  DELAYED
+  DELIVERED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum EventType {
+  LOCATION_UPDATE
+  WEATHER_ALERT
+  TRAFFIC_ALERT
+  DELAY_PREDICTED
+  REROUTED
+}
+
+model Shipment {
+  id            String           @id @default(uuid())
+  origin        String
+  destination   String
+  status        ShipmentStatus   @default(CREATED)
+  priority      Int              @default(1)
+  vehicleId     String?
+  vehicle       Vehicle?         @relation(fields: [vehicleId], references: [id])
+  routes        Route[]
+  trackingLogs  TrackingLog[]
+  events        Event[]
+  predictions   Prediction[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model Vehicle {
+  id            String         @id @default(uuid())
+  type          String
+  capacity      Int
+  // store location as simple lat/lng (PostGIS handled outside Prisma if needed)
+  latitude      Float?
+  longitude     Float?
+  status        VehicleStatus  @default(AVAILABLE)
+  shipments     Shipment[]
+}
+
+model TrackingLog {
+  id           String    @id @default(uuid())
+  shipmentId   String
+  shipment     Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  latitude     Float
+  longitude    Float
+  speed        Float?
+  recordedAt   DateTime  @default(now())
+  @@index([shipmentId, recordedAt])
+}
+
+model Route {
+  id            String    @id @default(uuid())
+  shipmentId    String
+  shipment      Shipment  @relation(fields: [shipmentId], references: [id])
+  isActive      Boolean   @default(true)
+  totalDistance Float?
+  estimatedTime Float?
+  nodes         RouteNode[]
+  createdAt     DateTime  @default(now())
+}
+
+model RouteNode {
+  id         String   @id @default(uuid())
+  routeId    String
+  route      Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  latitude   Float
+  longitude  Float
+  sequence   Int
+  @@index([routeId, sequence])
+}
+
+model Event {
+  id           String     @id @default(uuid())
+  shipmentId   String
+  shipment     Shipment   @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  type         EventType
+  description  String?
+  metadata     Json?      // store weather API response, traffic data, etc.
+  createdAt    DateTime   @default(now())
+  @@index([shipmentId, type])
+}
+
+model Prediction {
+  id            String    @id @default(uuid())
+  shipmentId    String
+  shipment      Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  delayRisk     Float     // 0 → 1 probability
+  predictedDelayMinutes Int?
+  modelVersion  String?
+  features      Json?     // store ML input features
+  createdAt     DateTime  @default(now())
+  @@index([shipmentId, createdAt])
 }
