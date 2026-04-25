@@ -22,105 +22,155 @@ model User {
   createdAt DateTime @default(now())
 }
 
+
+
 enum ShipmentStatus {
-  CREATED
+  PENDING
   IN_TRANSIT
   DELAYED
+  REROUTED
   DELIVERED
-}
-
-enum VehicleStatus {
-  AVAILABLE
-  IN_USE
-  MAINTENANCE
+  FAILED
 }
 
 enum EventType {
   LOCATION_UPDATE
-  WEATHER_ALERT
-  TRAFFIC_ALERT
-  DELAY_PREDICTED
-  REROUTED
+  WEATHER_UPDATE
+  TRAFFIC_UPDATE
+  DELAY_DETECTED
+  ANOMALY_DETECTED
+  REROUTE_TRIGGERED
+  PREDICTION
 }
+
+//////////////////////////////////////////////////////
+// MODELS
+//////////////////////////////////////////////////////
 
 model Shipment {
-  id            String           @id @default(uuid())
-  origin        String
-  destination   String
-  status        ShipmentStatus   @default(CREATED)
-  priority      Int              @default(1)
-  vehicleId     String?
-  vehicle       Vehicle?         @relation(fields: [vehicleId], references: [id])
-  routes        Route[]
-  trackingLogs  TrackingLog[]
-  events        Event[]
-  predictions   Prediction[]
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id                 String          @id
+  source             String
+  destination        String
+  status             ShipmentStatus  @default(PENDING)
+
+  current_location   String?
+  current_lat        Float?
+  current_lon        Float?
+
+  route_id           String?
+  route              Route?          @relation(fields: [route_id], references: [id])
+
+  estimated_delivery DateTime?
+  actual_delivery    DateTime?
+
+  metadata           Json?
+
+  created_at         DateTime        @default(now())
+  updated_at         DateTime        @updatedAt
+
+  // Relations
+  events             Event[]
+  alerts             Alert[]
+  locationLogs       LocationLog[]
+
+  @@index([status])
 }
 
-model Vehicle {
-  id            String         @id @default(uuid())
-  type          String
-  capacity      Int
-  // store location as simple lat/lng (PostGIS handled outside Prisma if needed)
-  latitude      Float?
-  longitude     Float?
-  status        VehicleStatus  @default(AVAILABLE)
-  shipments     Shipment[]
-}
-
-model TrackingLog {
-  id           String    @id @default(uuid())
-  shipmentId   String
-  shipment     Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  latitude     Float
-  longitude    Float
-  speed        Float?
-  recordedAt   DateTime  @default(now())
-  @@index([shipmentId, recordedAt])
-}
-
-model Route {
-  id            String    @id @default(uuid())
-  shipmentId    String
-  shipment      Shipment  @relation(fields: [shipmentId], references: [id])
-  isActive      Boolean   @default(true)
-  totalDistance Float?
-  estimatedTime Float?
-  nodes         RouteNode[]
-  createdAt     DateTime  @default(now())
-}
-
-model RouteNode {
-  id         String   @id @default(uuid())
-  routeId    String
-  route      Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  latitude   Float
-  longitude  Float
-  sequence   Int
-  @@index([routeId, sequence])
-}
+//////////////////////////////////////////////////////
 
 model Event {
-  id           String     @id @default(uuid())
-  shipmentId   String
-  shipment     Shipment   @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  type         EventType
-  description  String?
-  metadata     Json?      // store weather API response, traffic data, etc.
-  createdAt    DateTime   @default(now())
-  @@index([shipmentId, type])
+  id           Int        @id @default(autoincrement())
+  shipment_id  String
+  shipment     Shipment   @relation(fields: [shipment_id], references: [id])
+
+  timestamp    DateTime   @default(now())
+  event_type   EventType
+  data         Json
+  severity     String
+
+  @@index([shipment_id, timestamp])
 }
 
+//////////////////////////////////////////////////////
+
+model Route {
+  id              String    @id
+  nodes           Json
+  edges           Json
+  total_distance  Float
+  estimated_time  Float
+  risk_score      Float     @default(0.0)
+  created_at      DateTime  @default(now())
+
+  shipments       Shipment[]
+}
+
+//////////////////////////////////////////////////////
+model Alert {
+  id           Int       @id @default(autoincrement())
+  shipment_id  String?
+  shipment     Shipment? @relation(fields: [shipment_id], references: [id])
+
+  alert_type   String
+  message      String
+  is_resolved  Boolean   @default(false)
+
+  created_at   DateTime  @default(now())
+  resolved_at  DateTime?
+
+  @@index([shipment_id])
+}
+
+//////////////////////////////////////////////////////
+
+model LocationLog {
+  id           Int       @id @default(autoincrement())
+  shipment_id  String
+  shipment     Shipment  @relation(fields: [shipment_id], references: [id])
+
+  lat          Float
+  lon          Float
+  location     String?
+
+  timestamp    DateTime  @default(now())
+
+  @@index([shipment_id])
+}
+
+//////////////////////////////////////////////////////
+
 model Prediction {
-  id            String    @id @default(uuid())
-  shipmentId    String
-  shipment      Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  delayRisk     Float     // 0 → 1 probability
-  predictedDelayMinutes Int?
-  modelVersion  String?
-  features      Json?     // store ML input features
-  createdAt     DateTime  @default(now())
-  @@index([shipmentId, createdAt])
+  id                      Int       @id @default(autoincrement())
+  shipmentId              String?
+  
+  disruptionProbability   Float
+  riskFactors             Json
+  recommendedActions      Json
+
+  createdAt               DateTime  @default(now())
+}
+
+//////////////////////////////////////////////////////
+
+model OptimizationLog {
+  id            Int      @id @default(autoincrement())
+
+  source        String
+  destination   String
+
+  constraints   Json?
+  resultRoute   Json
+
+  createdAt     DateTime @default(now())
+}
+
+//////////////////////////////////////////////////////
+
+model SystemHealth {
+  id         Int      @id @default(autoincrement())
+  status     String
+  database   String
+  redis      String
+  neo4j      String
+  timestamp  DateTime @default(now())
 }
