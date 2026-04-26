@@ -21,7 +21,7 @@ export default function Sidebar() {
       {/* Brand */}
       <div className="mb-10 px-4">
         <h1 className="text-xl font-black tracking-tighter text-primary uppercase">
-          LOGICHAIN
+          0xCHAIN
         </h1>
         <p className="text-[10px] uppercase tracking-[0.2em] text-text-dim font-bold">
           Kinetic Terminal

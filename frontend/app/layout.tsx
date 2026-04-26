@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LogiChain | Kinetic Terminal",
+  title: "0xCHAIN | Kinetic Terminal",
   description:
     "High-performance logistics command center for fleet management, route optimization, and predictive analytics.",
 };
