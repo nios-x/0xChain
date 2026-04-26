@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/dashboard", icon: "dashboard", label: "Operations" },
@@ -15,6 +17,23 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
+
+  const userName = session?.user?.name ?? "Operator";
+  const userEmail = session?.user?.email ?? "";
+  const userImage = session?.user?.image ?? null;
+
+  // Derive a short display label from role stored in localStorage
+  const role =
+    typeof window !== "undefined"
+      ? localStorage.getItem("user_role") ?? "Agent"
+      : "Agent";
 
   return (
     <aside className="flex flex-col fixed left-0 top-0 h-full py-6 px-4 w-[240px] bg-void border-r border-white/5 z-50">
@@ -58,19 +77,47 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* User Profile */}
-      <div className="mt-auto px-4 pt-6 border-t border-white/10 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-surface-elevated overflow-hidden ring-2 ring-primary/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-text-muted text-lg">
-            person
-          </span>
+      {/* User Profile + Sign Out */}
+      <div className="mt-auto px-4 pt-6 border-t border-white/10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-surface-elevated overflow-hidden ring-2 ring-primary/20 flex-shrink-0 flex items-center justify-center">
+            {userImage ? (
+              <Image
+                src={userImage}
+                alt={userName}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="material-symbols-outlined text-text-muted text-lg">
+                person
+              </span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-white uppercase truncate">
+              {userName}
+            </p>
+            <p className="text-[10px] text-text-dim font-bold uppercase truncate">
+              {userEmail || role}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs font-bold text-white uppercase">Operator-04</p>
-          <p className="text-[10px] text-text-dim font-bold uppercase">
-            Sector Alpha
-          </p>
-        </div>
+
+        {/* Sign-out button */}
+        {session && (
+          <button
+            id="sidebar-signout"
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] text-text-dim hover:text-white hover:bg-white/5 transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.1em]">
+              Sign Out
+            </span>
+          </button>
+        )}
       </div>
     </aside>
   );

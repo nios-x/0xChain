@@ -1,4 +1,14 @@
-type ChipVariant = "delivered" | "in-transit" | "delayed" | "pending" | "active" | "completed" | "at-risk" | "overdue";
+type ChipVariant =
+  | "delivered"
+  | "in-transit"
+  | "delayed"
+  | "pending"
+  | "active"
+  | "completed"
+  | "at-risk"
+  | "overdue"
+  | "failed"
+  | "rerouted";
 
 interface StatusChipProps {
   status: ChipVariant;
@@ -11,8 +21,10 @@ const variantStyles: Record<ChipVariant, string> = {
   active: "bg-success/10 text-success",
   "in-transit": "bg-warning/10 text-warning",
   "at-risk": "bg-warning/10 text-warning",
+  rerouted: "bg-info/10 text-info",
   delayed: "bg-error/10 text-error",
   overdue: "bg-error/10 text-error",
+  failed: "bg-error/20 text-error",
   pending: "bg-text-dim/10 text-text-muted",
 };
 
@@ -24,6 +36,8 @@ const defaultLabels: Record<ChipVariant, string> = {
   "at-risk": "At Risk",
   delayed: "Delayed",
   overdue: "Overdue",
+  failed: "Failed",
+  rerouted: "Rerouted",
   pending: "Pending",
 };
 

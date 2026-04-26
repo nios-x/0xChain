@@ -1,13 +1,89 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import MetricCard from "../../components/MetricCard";
+import {
+  getDashboardMetrics,
+  type DashboardResponse,
+  type ShipmentEvent,
+} from "@/lib/api";
+
+const EVENT_ICON_MAP: Record<string, string> = {
+  location_update: "location_on",
+  weather_update: "cloud",
+  traffic_update: "traffic",
+  delay_detected: "schedule",
+  anomaly_detected: "warning",
+  reroute_triggered: "alt_route",
+  prediction: "query_stats",
+};
+
+function SkeletonBlock({ className = "" }: { className?: string }) {
+  return (
+    <div className={`bg-surface-elevated rounded animate-pulse ${className}`} />
+  );
+}
+
+function formatEventTime(ts: string) {
+  try {
+    return new Date(ts).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return "--:--:--";
+  }
+}
+
+function formatEventTitle(e: ShipmentEvent) {
+  const type = e.event_type.replace(/_/g, " ");
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
 
 export default function DashboardPage() {
+  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await getDashboardMetrics();
+        if (!cancelled) setData(res);
+      } catch (err) {
+        if (!cancelled)
+          setError(
+            err instanceof Error ? err.message : "Backend unavailable"
+          );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const m = data?.metrics;
+  const events = data?.recent_events ?? [];
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
           <span className="text-[11px] uppercase font-bold tracking-[0.2em] text-primary mb-2 block">
-            System Status: Optimal
+            {error ? "Backend Disconnected" : "System Status: Optimal"}
           </span>
           <h2 className="text-5xl font-extrabold tracking-tighter text-white">
             Operations Overview
@@ -18,36 +94,69 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {/* Backend error banner */}
+      {error && (
+        <div className="bg-warning/10 border border-warning/30 rounded-[8px] px-4 py-3 flex items-center gap-3">
+          <span className="material-symbols-outlined text-warning text-xl">
+            wifi_off
+          </span>
+          <div>
+            <p className="text-[12px] font-bold text-warning uppercase tracking-wide">
+              Backend Disconnected
+            </p>
+            <p className="text-[11px] text-text-muted">
+              Showing cached/default values. Start the FastAPI server at{" "}
+              <code className="font-mono">localhost:8000</code>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Total Shipments"
-          value="14,208"
-          trend="+12.5%"
-          trendDirection="up"
-          icon="local_shipping"
-        />
-        <MetricCard
-          title="Delayed Units"
-          value="42"
-          trend="Requires Action"
-          trendDirection="down"
-          icon="warning"
-          variant="error"
-        />
-        <MetricCard
-          title="In Transit"
-          value="2,841"
-          subtitle="Active Flow"
-          icon="route"
-        />
-        <MetricCard
-          title="System Alerts"
-          value="08"
-          subtitle="Maintenance Pending"
-          icon="notification_important"
-          variant="info"
-        />
+        {loading ? (
+          <>
+            <SkeletonBlock className="h-[120px]" />
+            <SkeletonBlock className="h-[120px]" />
+            <SkeletonBlock className="h-[120px]" />
+            <SkeletonBlock className="h-[120px]" />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              title="Total Shipments"
+              value={m?.total_shipments?.toLocaleString() ?? "—"}
+              trend="+Live"
+              trendDirection="up"
+              icon="local_shipping"
+            />
+            <MetricCard
+              title="Delayed Units"
+              value={String(m?.delayed ?? "—")}
+              trend={m && m.delayed > 0 ? "Requires Action" : "On Track"}
+              trendDirection={m && m.delayed > 0 ? "down" : "up"}
+              icon="warning"
+              variant={m && m.delayed > 0 ? "error" : undefined}
+            />
+            <MetricCard
+              title="In Transit"
+              value={m?.in_transit?.toLocaleString() ?? "—"}
+              subtitle="Active Flow"
+              icon="route"
+            />
+            <MetricCard
+              title="System Alerts"
+              value={String(m?.alerts_active ?? "—").padStart(2, "0")}
+              subtitle={
+                m && m.alerts_active > 0
+                  ? "Needs Attention"
+                  : "All Clear"
+              }
+              icon="notification_important"
+              variant="info"
+            />
+          </>
+        )}
       </div>
 
       {/* Bento Content Grid */}
@@ -70,13 +179,34 @@ export default function DashboardPage() {
                   Region Focus
                 </p>
                 <p className="text-sm font-bold text-white uppercase">
-                  North American Hub
+                  Global Logistics Hub
                 </p>
               </div>
               <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white">
                   Live Telemetry
+                </p>
+              </div>
+            </div>
+            {/* Stat overlays */}
+            <div className="absolute bottom-6 left-6 flex gap-3">
+              <div className="bg-black/70 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10">
+                <p className="text-[10px] text-text-dim uppercase font-bold">Delivered</p>
+                <p className="text-lg font-extrabold text-primary tabular-nums">
+                  {loading ? "…" : (m?.delivered ?? 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-black/70 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10">
+                <p className="text-[10px] text-text-dim uppercase font-bold">Failed</p>
+                <p className="text-lg font-extrabold text-error tabular-nums">
+                  {loading ? "…" : (m?.failed ?? 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-black/70 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10">
+                <p className="text-[10px] text-text-dim uppercase font-bold">Avg Delay</p>
+                <p className="text-lg font-extrabold text-warning tabular-nums">
+                  {loading ? "…" : `${(m?.average_delay_hours ?? 0).toFixed(1)}h`}
                 </p>
               </div>
             </div>
@@ -95,7 +225,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Events Feed */}
-          <div className="bg-[#0e0e0e] rounded-[8px]">
+          <div className="bg-[#0e0e0e] rounded-[8px] p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-dim">
                 Global Logistics Stream
@@ -105,30 +235,63 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="divide-y divide-white/5">
-              {[
-                { icon: "rocket_launch", title: "Vessel TX-902 Departed", detail: "Port of Singapore • 14:22:01", status: "STATUS_SYNCED" },
-                { icon: "inventory", title: "Cargo Inspection Clear", detail: "Terminal 4 • Bulk Storage A • 13:58:30", status: "STATUS_SYNCED" },
-                { icon: "minor_crash", title: "Route Re-calculation", detail: "Fleet Truck ID-405 • Traffic Delay • 13:12:15", status: "STATUS_AUTO_RESCHEDULE" },
-              ].map((event, i) => (
-                <div key={i} className="flex items-center justify-between h-[56px] px-4 hover:bg-surface-elevated transition-colors rounded-[8px] group">
-                  <div className="flex items-center gap-4">
-                    <span className="material-symbols-outlined text-text-dim group-hover:text-primary transition-colors">
-                      {event.icon}
-                    </span>
-                    <div>
-                      <p className="text-sm font-bold text-white uppercase tracking-tight">
-                        {event.title}
-                      </p>
-                      <p className="text-[10px] text-text-dim font-bold">
-                        {event.detail}
-                      </p>
-                    </div>
+              {loading ? (
+                [0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center justify-between h-[56px] px-4">
+                    <SkeletonBlock className="h-4 w-48" />
+                    <SkeletonBlock className="h-3 w-24" />
                   </div>
-                  <span className="text-[10px] font-mono text-text-dim group-hover:text-text-muted">
-                    {event.status}
-                  </span>
-                </div>
-              ))}
+                ))
+              ) : events.length > 0 ? (
+                events.slice(0, 8).map((event, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between h-[56px] px-4 hover:bg-surface-elevated transition-colors rounded-[8px] group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="material-symbols-outlined text-text-dim group-hover:text-primary transition-colors">
+                        {EVENT_ICON_MAP[event.event_type] ?? "radio_button_unchecked"}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-white uppercase tracking-tight">
+                          {formatEventTitle(event)} — {event.shipment_id}
+                        </p>
+                        <p className="text-[10px] text-text-dim font-bold">
+                          {formatEventTime(event.timestamp)} •{" "}
+                          {event.severity.toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-text-dim group-hover:text-text-muted">
+                      {event.event_type.toUpperCase()}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                // Fallback static events when backend has no data yet
+                [
+                  { icon: "rocket_launch", title: "Vessel TX-902 Departed", detail: "Port of Singapore • 14:22:01", status: "STATUS_SYNCED" },
+                  { icon: "inventory", title: "Cargo Inspection Clear", detail: "Terminal 4 • Bulk Storage A • 13:58:30", status: "STATUS_SYNCED" },
+                  { icon: "minor_crash", title: "Route Re-calculation", detail: "Fleet Truck ID-405 • Traffic Delay • 13:12:15", status: "STATUS_AUTO_RESCHEDULE" },
+                ].map((event, i) => (
+                  <div key={i} className="flex items-center justify-between h-[56px] px-4 hover:bg-surface-elevated transition-colors rounded-[8px] group">
+                    <div className="flex items-center gap-4">
+                      <span className="material-symbols-outlined text-text-dim group-hover:text-primary transition-colors">
+                        {event.icon}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-white uppercase tracking-tight">
+                          {event.title}
+                        </p>
+                        <p className="text-[10px] text-text-dim font-bold">{event.detail}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-text-dim group-hover:text-text-muted">
+                      {event.status}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -154,7 +317,8 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-text-muted leading-relaxed">
-                  Pharma-Chain Container #9283 exceeded 4.0°C. Immediate stabilization required.
+                  Pharma-Chain Container #9283 exceeded 4.0°C. Immediate
+                  stabilization required.
                 </p>
                 <div className="flex gap-2">
                   <button className="flex-1 bg-error hover:brightness-110 text-white text-[10px] font-black py-2 rounded uppercase transition-colors">
@@ -173,7 +337,8 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-text-muted leading-relaxed">
-                  Unit TRK-882 departed designated transit corridor. Contacting driver.
+                  Unit TRK-882 departed designated transit corridor. Contacting
+                  driver.
                 </p>
                 <button className="w-full bg-warning/10 text-warning border border-warning/20 hover:bg-warning/20 text-[10px] font-black py-2 rounded uppercase transition-colors">
                   Open Comms
@@ -189,7 +354,10 @@ export default function DashboardPage() {
                 Automated<br />Insights
               </h3>
               <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest mb-6">
-                AI-Driven Efficiency Score: 98.4
+                Disruption Probability:{" "}
+                {m
+                  ? `${(m.disruption_probability_avg * 100).toFixed(1)}%`
+                  : "—"}
               </p>
               <button className="px-6 py-2 bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-full hover:scale-105 transition-transform">
                 Optimize Routes
