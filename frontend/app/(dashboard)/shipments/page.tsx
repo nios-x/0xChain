@@ -97,9 +97,9 @@ export default function ShipmentsPage() {
             Shipments
           </h2>
         </div>
-        <button className="rounded-full bg-primary px-8 py-3 text-white font-bold text-sm uppercase tracking-widest hover:scale-[1.04] hover:bg-primary-hover transition-all glow-primary">
+        <Link href="/shipments/create" className="rounded-full bg-primary px-8 py-3 text-white font-bold text-sm uppercase tracking-widest hover:scale-[1.04] hover:bg-primary-hover transition-all glow-primary inline-flex items-center justify-center">
           New Shipment
-        </button>
+        </Link>
       </div>
 
       {/* Error banner */}
