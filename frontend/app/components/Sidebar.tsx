@@ -11,7 +11,6 @@ const navItems = [
   { href: "/tracking", icon: "map", label: "Fleet Map" },
   { href: "/routes", icon: "route", label: "Optimization" },
   { href: "/analytics", icon: "monitoring", label: "Analytics" },
-  { href: "/driver", icon: "person", label: "Driver Hub" },
   { href: "/supplier", icon: "factory", label: "Suppliers" },
 ];
 
@@ -55,11 +54,10 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all duration-200 ${
-                isActive
-                  ? "text-primary font-bold bg-white/5"
-                  : "text-text-dim hover:text-text-secondary hover:bg-white/5"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all duration-200 ${isActive
+                ? "text-primary font-bold bg-white/5"
+                : "text-text-dim hover:text-text-secondary hover:bg-white/5"
+                }`}
             >
               <span
                 className="material-symbols-outlined text-[20px]"

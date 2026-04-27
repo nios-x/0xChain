@@ -9,19 +9,25 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
   const [role, setRole] = useState<string | null>(null);
-
   // Restore previously selected role from localStorage
+  
   useEffect(() => {
     const savedRole = localStorage.getItem("user_role");
     if (savedRole) setRole(savedRole);
   }, []);
 
-  // If user is already authenticated AND has a role, go straight to dashboard
+  const getRedirectPath = (userRole: string) => {
+    if (userRole === "driver") return "/driver";
+    if (userRole === "customer") return "/customer";
+    if (userRole === "supplier") return "/dashboard";
+    return "/dashboard";
+  };
+
+  // If user is already authenticated AND has a role, go straight to the respective page
   useEffect(() => {
     if (status === "authenticated" && role) {
-      router.replace("/dashboard");
+      router.replace(getRedirectPath(role));
     }
   }, [status, role, router]);
 
@@ -32,7 +38,7 @@ export default function LoginPage() {
 
   const handleContinue = () => {
     if (!role) return;
-    router.push("/dashboard");
+    router.push(getRedirectPath(role));
   };
 
   return (
@@ -90,37 +96,22 @@ export default function LoginPage() {
               </p>
 
               <div className="grid grid-cols-1 gap-3">
-                {/* Receiver */}
+                {/* Customer */}
                 <button
-                  id="role-receiver"
-                  onClick={() => handleRoleSelect("receiver")}
-                  className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "receiver"
+                  id="role-customer"
+                  onClick={() => handleRoleSelect("customer")}
+                  className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "customer"
                       ? "border-primary bg-surface-container-highest"
                       : "border-text-dim hover:bg-surface-container-high"
                     }`}
                 >
                   <PackageCheck size={18} className="text-primary" />
                   <span className="text-[12px] font-bold uppercase tracking-wide text-white">
-                    Receiver (Gets Delivery)
+                    Customer
                   </span>
                 </button>
 
-                {/* Delivery Agent */}
-                <button
-                  id="role-delivery"
-                  onClick={() => handleRoleSelect("delivery")}
-                  className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "delivery"
-                      ? "border-primary bg-surface-container-highest"
-                      : "border-text-dim hover:bg-surface-container-high"
-                    }`}
-                >
-                  <Truck size={18} className="text-primary" />
-                  <span className="text-[12px] font-bold uppercase tracking-wide text-white">
-                    Delivery Agent (Brings Package)
-                  </span>
-                </button>
-
-                {/* Transport Driver */}
+                {/* Driver */}
                 <button
                   id="role-driver"
                   onClick={() => handleRoleSelect("driver")}
@@ -129,9 +120,24 @@ export default function LoginPage() {
                       : "border-text-dim hover:bg-surface-container-high"
                     }`}
                 >
+                  <Truck size={18} className="text-primary" />
+                  <span className="text-[12px] font-bold uppercase tracking-wide text-white">
+                    Driver
+                  </span>
+                </button>
+
+                {/* Supplier */}
+                <button
+                  id="role-supplier"
+                  onClick={() => handleRoleSelect("supplier")}
+                  className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "supplier"
+                      ? "border-primary bg-surface-container-highest"
+                      : "border-text-dim hover:bg-surface-container-high"
+                    }`}
+                >
                   <Plane size={18} className="text-primary" />
                   <span className="text-[12px] font-bold uppercase tracking-wide text-white">
-                    Transport Driver (Air / Sea / Rail / Road)
+                    Supplier
                   </span>
                 </button>
               </div>
@@ -193,7 +199,7 @@ export default function LoginPage() {
                       // Simulate authenticated state in dev by setting a flag
                       // and redirecting directly – works only when backend OAuth is not set up
                       if (role) {
-                        router.push("/dashboard");
+                        router.push(getRedirectPath(role));
                       } else {
                         alert("Select a role first");
                       }

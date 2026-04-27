@@ -33,7 +33,7 @@ class ShipmentCreate(BaseModel):
     source: str
     destination: str
     estimated_delivery: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    meta_data: Optional[Dict[str, Any]] = None
 
 
 class ShipmentUpdate(BaseModel):
@@ -57,7 +57,7 @@ class ShipmentResponse(BaseModel):
     updated_at: datetime
     estimated_delivery: Optional[datetime]
     actual_delivery: Optional[datetime]
-    metadata: Optional[Dict[str, Any]]
+    meta_data: Optional[Dict[str, Any]]
 
     class Config:
         from_attributes = True

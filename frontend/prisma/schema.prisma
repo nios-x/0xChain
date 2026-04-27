@@ -20,6 +20,11 @@ model User {
   pic       String?
   provider  String
   createdAt DateTime @default(now())
+  role enum{
+    supplier
+    customer
+    driver
+  }
 }
 
 

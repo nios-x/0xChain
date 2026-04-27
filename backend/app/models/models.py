@@ -47,7 +47,7 @@ class Shipment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     estimated_delivery = Column(DateTime)
     actual_delivery = Column(DateTime, nullable=True)
-    metadata = Column(JSON, default={})
+    meta_data = Column(JSON, default={})
 
     # Relationships
     events = relationship("Event", back_populates="shipment", cascade="all, delete-orphan")

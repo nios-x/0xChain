@@ -26,7 +26,7 @@ class ShipmentService:
                 destination=shipment_data.destination,
                 status=ShipmentStatus.PENDING,
                 estimated_delivery=shipment_data.estimated_delivery,
-                metadata=shipment_data.metadata or {},
+                meta_data=shipment_data.meta_data or {},
             )
             db.add(shipment)
             db.commit()
