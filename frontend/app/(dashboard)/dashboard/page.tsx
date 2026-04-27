@@ -105,8 +105,7 @@ export default function DashboardPage() {
               Backend Disconnected
             </p>
             <p className="text-[11px] text-text-muted">
-              Showing cached/default values. Start the FastAPI server at{" "}
-              <code className="font-mono">localhost:8000</code>.
+              Showing cached/default values. Backend API is unavailable.
             </p>
           </div>
         </div>

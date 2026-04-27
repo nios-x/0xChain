@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { shipmentId: string } }
+  { params }: { params: Promise<{ shipmentId: string }> }
 ) {
   try {
+    const { shipmentId } = await params;
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
 
     const events = await prisma.event.findMany({
-      where: { shipment_id: params.shipmentId },
+      where: { shipment_id: shipmentId },
       take: limit,
       orderBy: { timestamp: "desc" },
     });

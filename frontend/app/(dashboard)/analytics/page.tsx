@@ -122,8 +122,7 @@ export default function AnalyticsPage() {
         <div className="bg-warning/10 border border-warning/30 rounded-[8px] px-4 py-3 flex items-center gap-3">
           <span className="material-symbols-outlined text-warning text-xl">wifi_off</span>
           <p className="text-[11px] text-text-muted">
-            Prediction engine offline — showing static data. Start backend at{" "}
-            <code className="font-mono">localhost:8000</code>.
+            Prediction engine offline — showing static data. Backend API is unavailable.
           </p>
         </div>
       )}
