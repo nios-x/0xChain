@@ -107,7 +107,7 @@ export default function ShipmentsPage() {
         <div className="bg-warning/10 border border-warning/30 rounded-[8px] px-4 py-3 flex items-center gap-3">
           <span className="material-symbols-outlined text-warning text-xl">wifi_off</span>
           <p className="text-[11px] text-text-muted">
-            Backend disconnected — <code className="font-mono">localhost:8000</code>. {error}
+            Backend disconnected. {error}
           </p>
           <button
             onClick={fetchShipments}
