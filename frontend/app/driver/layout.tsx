@@ -25,7 +25,7 @@ export default function DriverLayout({
         <div className="flex flex-col items-center gap-4">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-dim">
-            Authenticating…
+            Authenticating...
           </span>
         </div>
       </div>
