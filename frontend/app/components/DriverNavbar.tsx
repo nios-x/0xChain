@@ -3,16 +3,24 @@
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function DriverNavbar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     router.push("/login");
   };
+
+  const navLinks = [
+    { name: "Dashboard", href: "/driver" },
+    { name: "My Routes", href: "/driver/routes" },
+    { name: "Vehicle Status", href: "/driver/fleet" },
+    { name: "Schedule", href: "/driver/schedule" },
+  ];
 
   return (
     <header className="flex justify-between items-center px-8 w-full h-16 sticky top-0 z-40 bg-[#0e0e0e]/80 backdrop-blur-xl border-b border-white/5">
@@ -23,18 +31,20 @@ export default function DriverNavbar() {
           </span>
         </Link>
         <nav className="hidden md:flex gap-6">
-          <Link href="/driver" className="text-[11px] font-bold uppercase tracking-widest text-primary">
-            Dashboard
-          </Link>
-          <Link href="/driver/routes" className="text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-white transition-colors">
-            My Routes
-          </Link>
-          <Link href="/driver/fleet" className="text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-white transition-colors">
-            Vehicle Status
-          </Link>
-          <Link href="/driver/schedule" className="text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-white transition-colors">
-            Schedule
-          </Link>
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-[11px] font-bold uppercase tracking-widest transition-colors ${
+                  isActive ? "text-primary" : "text-text-dim hover:text-white"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
