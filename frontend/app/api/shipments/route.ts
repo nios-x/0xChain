@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const dispatchDate = scheduled_dispatch ? new Date(scheduled_dispatch) : new Date();
     let estimatedDelivery = new Date(dispatchDate);
     const prio = mapPriority(priority);
-    
+
     if (prio === "STANDARD") {
       estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
     } else if (prio === "EXPRESS") {
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     const skip = parseInt(searchParams.get("skip") || "0", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const statusParam = searchParams.get("status")?.toUpperCase();
-    
+
     // Validate status
     let status: ShipmentStatus | undefined = undefined;
     if (statusParam && Object.values(ShipmentStatus).includes(statusParam as ShipmentStatus)) {

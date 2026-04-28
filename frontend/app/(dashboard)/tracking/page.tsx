@@ -1,10 +1,15 @@
+"use client"
+import dynamic from "next/dynamic";
+
+const TrackingMapComponent = dynamic(() => import("./TrackingMapComponent"), { ssr: false });
+
 export default function TrackingPage() {
   const fleet = [
-    { id: "TRK-401", driver: "M. Santos", status: "moving", location: "Interstate 10, CA", speed: "62 mph" },
-    { id: "TRK-402", driver: "J. Williams", status: "idle", location: "Fuel Stop FS-12", speed: "0 mph" },
-    { id: "TRK-405", driver: "K. Tanaka", status: "moving", location: "Highway 101, OR", speed: "55 mph" },
-    { id: "TRK-882", driver: "A. Rodriguez", status: "stopped", location: "Border Checkpoint G", speed: "0 mph" },
-    { id: "TRK-290", driver: "L. Chen", status: "moving", location: "Route 66, AZ", speed: "68 mph" },
+    { id: "TRK-401", driver: "M. Santos", status: "moving", location: "Interstate 10, CA", speed: "62 mph", lat: 34.0522, lng: -118.2437 },
+    { id: "TRK-402", driver: "J. Williams", status: "idle", location: "Fuel Stop FS-12", speed: "0 mph", lat: 36.1699, lng: -115.1398 },
+    { id: "TRK-405", driver: "K. Tanaka", status: "moving", location: "Highway 101, OR", speed: "55 mph", lat: 43.8041, lng: -120.5542 },
+    { id: "TRK-882", driver: "A. Rodriguez", status: "stopped", location: "Border Checkpoint G", speed: "0 mph", lat: 31.7619, lng: -106.4850 },
+    { id: "TRK-290", driver: "L. Chen", status: "moving", location: "Route 66, AZ", speed: "68 mph", lat: 35.1983, lng: -111.6513 },
   ];
 
   const statusColors: Record<string, string> = { moving: "bg-primary", idle: "bg-warning", stopped: "bg-error" };
@@ -13,20 +18,8 @@ export default function TrackingPage() {
     <div className="space-y-6 -mx-8 -my-10">
       <div className="relative h-[calc(100vh-64px)]">
         <div className="absolute inset-0 bg-[#0a0a0a]">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_40%,rgba(29,185,84,0.15),transparent_50%),radial-gradient(circle_at_70%_60%,rgba(29,185,84,0.1),transparent_50%)]" />
-          <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 1600 900">
-            <path d="M0 200 Q400 180 800 220 T1600 200" stroke="#333" fill="none" strokeWidth="0.5" />
-            <path d="M0 400 Q400 420 800 380 T1600 400" stroke="#333" fill="none" strokeWidth="0.5" />
-            <path d="M0 600 Q400 580 800 620 T1600 600" stroke="#333" fill="none" strokeWidth="0.5" />
-            <circle cx="300" cy="250" r="5" fill="#1DB954" opacity="0.8" />
-            <circle cx="300" cy="250" r="14" fill="none" stroke="#1DB954" strokeWidth="1" opacity="0.3" />
-            <circle cx="700" cy="350" r="5" fill="#1DB954" opacity="0.8" />
-            <circle cx="1100" cy="300" r="5" fill="#1DB954" opacity="0.8" />
-            <circle cx="500" cy="500" r="4" fill="#F59B23" opacity="0.8" />
-            <circle cx="900" cy="200" r="4" fill="#E22134" opacity="0.8" />
-            <line x1="300" y1="250" x2="700" y2="350" stroke="#1DB954" strokeWidth="2" opacity="0.3" />
-            <line x1="700" y1="350" x2="1100" y2="300" stroke="#1DB954" strokeWidth="2" opacity="0.3" />
-          </svg>
+          <TrackingMapComponent fleet={fleet} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20 pointer-events-none z-10" />
         </div>
 
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-[500px] max-w-[calc(100%-2rem)]">

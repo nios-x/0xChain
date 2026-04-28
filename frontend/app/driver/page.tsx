@@ -1,5 +1,23 @@
+"use client"
+import dynamic from "next/dynamic";
 import MetricCard from "../components/MetricCard";
+import { useEffect, useState } from "react";
 
+const DriverMapComponent = dynamic(() => import("./DriverMapComponent"), { ssr: false });
+function formatWindow(date: string) {
+  if (!date) return "N/A";
+
+  const start = new Date(date);
+  const end = new Date(start.getTime() + 60 * 60 * 1000); // +1 hour
+
+  return `${start.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })} - ${end.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
 function formatEventTime(ts: string) {
   try {
     return new Date(ts).toLocaleTimeString("en-US", {
@@ -14,21 +32,72 @@ function formatEventTime(ts: string) {
 }
 
 export default function DriverDashboardPage() {
-  const loading = false;
+  const [metrics, setMetrics] = useState({
+    deliveries_today: 0,
+    on_time_rate: 0,
+    total_distance: 0,
+    fuel_used: 0,
+  });
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const metrics = {
-    deliveries_today: 12,
-    on_time_rate: 96,
-    total_distance: 342,
-    fuel_used: 48,
-  };
 
-  const events = [
-    { icon: "local_shipping", title: "Departed Hub", detail: "Terminal B • 06:15:00", status: "LOGGED" },
-    { icon: "check_circle", title: "Delivery Complete", detail: "Stop 1: 1428 Elm St • 08:30:22", status: "SYNCED" },
-    { icon: "minor_crash", title: "Traffic Alert", detail: "Route I-95 • 09:12:15", status: "RE-ROUTED" },
-  ];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        await fetch("/api/driver/location", {
+          method: "POST",
+          body: JSON.stringify({
+            shipmentId: "your-id",
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            location: "Live",
+          }),
+        });
+      });
+    }, 5000);
 
+    return () => clearInterval(interval);
+  }, []);
+  const [stops, setStops] = useState<any[]>([]);
+  async function loadDashboardData() {
+    try {
+      const [m, e, s] = await Promise.all([
+        fetch("/api/driver/metrics").then((r) => r.json()),
+        fetch("/api/driver/events").then((r) => r.json()),
+        fetch("/api/driver/upcoming-stops").then((r) => r.json()),
+      ]);
+
+      // 🔒 Safety checks (important)
+      setMetrics(m?.error ? {
+        deliveries_today: 0,
+        on_time_rate: 0,
+        total_distance: 0,
+        fuel_used: 0,
+      } : m);
+
+      setEvents(Array.isArray(e) ? e : []);
+      setStops(Array.isArray(s) ? s : []);
+
+    } catch (err) {
+      console.error("Dashboard load failed:", err);
+
+      // fallback (never break UI)
+      setMetrics({
+        deliveries_today: 0,
+        on_time_rate: 0,
+        total_distance: 0,
+        fuel_used: 0,
+      });
+      setEvents([]);
+      setStops([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -88,34 +157,47 @@ export default function DriverDashboardPage() {
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* Dark Map Preview */}
           <div className="bg-surface rounded-[8px] overflow-hidden h-[500px] relative">
-            <div
-              className="absolute inset-0 bg-cover bg-center opacity-60"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'%3E%3Crect fill='%23121212' width='800' height='500'/%3E%3Cg opacity='0.3'%3E%3Ccircle cx='200' cy='150' r='3' fill='%231DB954'/%3E%3Ccircle cx='350' cy='200' r='3' fill='%231DB954'/%3E%3Ccircle cx='500' cy='180' r='3' fill='%231DB954'/%3E%3Ccircle cx='150' cy='300' r='3' fill='%231DB954'/%3E%3Ccircle cx='600' cy='250' r='3' fill='%231DB954'/%3E%3Ccircle cx='400' cy='350' r='3' fill='%231DB954'/%3E%3Ccircle cx='300' cy='100' r='2' fill='%23F59B23'/%3E%3Ccircle cx='650' cy='150' r='2' fill='%23F59B23'/%3E%3Cline x1='200' y1='150' x2='350' y2='200' stroke='%231DB954' stroke-width='1' opacity='0.4'/%3E%3Cline x1='350' y1='200' x2='500' y2='180' stroke='%231DB954' stroke-width='1' opacity='0.4'/%3E%3Cline x1='500' y1='180' x2='600' y2='250' stroke='%231DB954' stroke-width='1' opacity='0.4'/%3E%3Cline x1='150' y1='300' x2='400' y2='350' stroke='%231DB954' stroke-width='1' opacity='0.3'/%3E%3C/g%3E%3Cg opacity='0.08'%3E%3Cpath d='M0 100 Q200 80 400 120 T800 100' stroke='%23333' fill='none'/%3E%3Cpath d='M0 200 Q200 220 400 180 T800 200' stroke='%23333' fill='none'/%3E%3Cpath d='M0 300 Q200 280 400 320 T800 300' stroke='%23333' fill='none'/%3E%3Cpath d='M0 400 Q200 380 400 420 T800 400' stroke='%23333' fill='none'/%3E%3C/g%3E%3C/svg%3E")`,
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
+            <DriverMapComponent />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20 pointer-events-none z-10" />
+            <div className="space-y-4">
+              {stops.length === 0 ? (
+                <p className="text-text-dim text-sm">No upcoming stops</p>
+              ) : (
+                stops.map((stop) => (
+                  <div
+                    key={stop.id}
+                    className="bg-surface-container-high p-4 rounded-[8px] space-y-3 border border-white/5"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-sm font-bold text-white">
+                        {stop.id.slice(0, 8).toUpperCase()}
+                      </span>
 
-            {/* Map Overlay Labels */}
-            <div className="absolute top-6 left-6 flex flex-col gap-2">
-              <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-text-dim">
-                  Current Route
-                </p>
-                <p className="text-sm font-bold text-white uppercase">
-                  DEL-9920 — Priority Express
-                </p>
-              </div>
-              <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white">
-                  Live GPS
-                </p>
-              </div>
+                      <span
+                        className={`text-[10px] font-bold uppercase ${stop.priority === "EXPRESS"
+                          ? "text-warning"
+                          : stop.priority === "PRIORITY"
+                            ? "text-primary"
+                            : "text-text-muted"
+                          }`}
+                      >
+                        {stop.priority}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-text-muted truncate">
+                      {stop.destination}
+                    </p>
+
+                    <p className="text-[10px] text-text-dim mt-1 tabular-nums">
+                      Window: {formatWindow(stop.scheduled_dispatch)}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
-
             {/* Stat overlays */}
-            <div className="absolute bottom-6 left-6 flex gap-3">
+            <div className="absolute bottom-6 left-6 flex gap-3 z-20 pointer-events-none">
               <div className="bg-black/70 backdrop-blur-md px-4 py-2 rounded-[8px] border border-white/10">
                 <p className="text-[10px] text-text-dim uppercase font-bold">Progress</p>
                 <p className="text-lg font-extrabold text-primary tabular-nums">78%</p>
@@ -131,7 +213,7 @@ export default function DriverDashboardPage() {
             </div>
 
             {/* Map Actions */}
-            <div className="absolute bottom-6 right-6 flex gap-2">
+            <div className="absolute bottom-6 right-6 flex gap-2 z-20">
               <button className="w-12 h-12 rounded-[8px] bg-black/80 backdrop-blur-md border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
                 <span className="material-symbols-outlined text-white">add</span>
               </button>

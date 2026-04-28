@@ -31,9 +31,6 @@ export default function SupplierPage() {
           <span className="text-[11px] uppercase font-bold tracking-[0.2em] text-primary mb-2 block">Supply Chain Hub</span>
           <h2 className="text-4xl font-extrabold tracking-tighter text-white">Supplier Dashboard</h2>
         </div>
-        <button className="rounded-full bg-primary px-8 py-3 text-white font-bold text-sm uppercase tracking-widest hover:scale-[1.04] hover:bg-primary-hover transition-all glow-primary">
-          Create Shipment
-        </button>
       </div>
 
       {/* KPI Cards */}

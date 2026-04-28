@@ -193,6 +193,8 @@ export async function getPrediction(
     weather_condition?: string;
     traffic_level?: string;
     distance_remaining?: number;
+    lat?: number;
+    lon?: number;
   }
 ): Promise<PredictionResponse> {
   return apiPost<unknown, PredictionResponse>("/predictions/disruption", {
