@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ShipmentStatus } from "@prisma/client";
+import { CargoType, ShipmentStatus } from "@prisma/client";
 import { PriorityClass } from "@prisma/client";
+
+const cargoTypeMap: Record<string, CargoType> = {
+  "Standard Freight": "STANDARD_FREIGHT",
+  "Perishable Goods": "PERISHABLE_GOODS",
+  "Hazardous Materials": "HAZARDOUS_MATERIALS",
+  "Fragile Items": "FRAGILE_ITEMS",
+};
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,7 +71,7 @@ export async function POST(request: NextRequest) {
         destination_lon: destination_lon ? parseFloat(destination_lon) : undefined,
         weight_kg: weight_kg ? parseFloat(weight_kg) : undefined,
         volume_m3: volume_m3 ? parseFloat(volume_m3) : undefined,
-        cargo_type: (cargo_type),
+        cargo_type: CargoType.STANDARD_FREIGHT,
         priority: (prio) as PriorityClass,
         scheduled_dispatch: dispatchDate,
         notes: notes ?? undefined,
