@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import StatusChip from "../../../components/StatusChip";
+
+const MapComponent = dynamic(() => import("./MapComponent"), { ssr: false });
 import { getShipment, getShipmentEvents, type Shipment, type ShipmentEvent, type ShipmentStatus } from "@/lib/api";
 
 type ChipVariant = "delivered" | "in-transit" | "delayed" | "pending" | "active" | "completed" | "at-risk" | "overdue" | "failed" | "rerouted";
@@ -196,27 +199,20 @@ export default function ShipmentDetailsPage() {
               </div>
             )}
 
-            {/* Map Placeholder */}
+            {/* Live Map */}
             <div className="bg-surface rounded-[8px] h-[300px] relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-surface to-surface-elevated flex items-center justify-center">
-                <div className="text-center">
-                  <span className="material-symbols-outlined text-6xl text-primary/30 mb-2">map</span>
-                  <p className="text-text-dim text-sm font-bold uppercase tracking-widest">
-                    Live Tracking Map
-                  </p>
-                  {shipment?.current_lat && shipment?.current_lon ? (
-                    <p className="text-primary text-xs mt-1 font-mono">
-                      {shipment.current_lat.toFixed(4)}, {shipment.current_lon.toFixed(4)}
-                    </p>
-                  ) : (
-                    <p className="text-text-dim text-xs mt-1">Coordinates unavailable</p>
-                  )}
-                </div>
-              </div>
-              <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-[8px] border border-white/10 flex items-center gap-2">
+              <MapComponent 
+                source_lat={shipment?.source_lat}
+                source_lon={shipment?.source_lon}
+                destination_lat={shipment?.destination_lat}
+                destination_lon={shipment?.destination_lon}
+                current_lat={shipment?.current_lat}
+                current_lon={shipment?.current_lon}
+              />
+              <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-[8px] border border-white/10 flex items-center gap-2 z-10 pointer-events-none">
                 <div className={`w-2 h-2 rounded-full ${shipment?.status === "in_transit" ? "bg-primary animate-pulse" : "bg-text-dim"}`} />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white">
-                  {shipment?.status === "in_transit" ? "Live" : "Static"}
+                  {shipment?.status === "in_transit" ? "Live Tracking" : "Static Route"}
                 </span>
               </div>
             </div>
@@ -256,25 +252,9 @@ export default function ShipmentDetailsPage() {
                     </div>
                   ))
                 ) : (
-                  // Fallback static events
-                  [
-                    { time: "14:22:01", event: "GPS Position Updated", detail: "Lat: 34.0522, Lng: -118.2437" },
-                    { time: "13:58:30", event: "Temperature Check Passed", detail: "Current: 2.8°C / Threshold: 4.0°C" },
-                    { time: "13:12:15", event: "Route Recalculated", detail: "New ETA: +45min due to traffic" },
-                  ].map((e, i) => (
-                    <div key={i} className="flex items-center justify-between h-[56px] px-4 hover:bg-surface-elevated transition-colors group">
-                      <div className="flex items-center gap-4">
-                        <span className="text-[11px] font-mono tabular-nums text-text-muted w-16">{e.time}</span>
-                        <div>
-                          <p className="text-sm font-bold text-white">{e.event}</p>
-                          <p className="text-[10px] text-text-dim">{e.detail}</p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-text-dim text-sm group-hover:text-primary transition-colors">
-                        chevron_right
-                      </span>
-                    </div>
-                  ))
+                  <div className="p-8 text-center text-text-dim text-sm">
+                    No events recorded yet.
+                  </div>
                 )}
               </div>
             </div>

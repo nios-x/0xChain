@@ -1,24 +1,164 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Box, Calendar, MapPin, Truck, ShieldAlert, Send } from "lucide-react";
+
+interface PlaceRecommendation {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
+function AddressAutocomplete({ 
+  label, 
+  placeholder, 
+  required,
+  name 
+}: { 
+  label: string; 
+  placeholder: string; 
+  required?: boolean;
+  name?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [recommendations, setRecommendations] = useState<PlaceRecommendation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceRecommendation | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!query || query.length < 3 || query === selectedPlace?.display_name) {
+        setRecommendations([]);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json`);
+        const data = await res.json();
+        setRecommendations(data);
+      } catch (error) {
+        console.error("Error fetching places:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchRecommendations, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [query, selectedPlace]);
+
+  return (
+    <div className="space-y-2 relative" ref={wrapperRef}>
+      <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-4">
+        {label}
+      </label>
+      
+      {/* Hidden inputs to store actual coordinates for form submission */}
+      {selectedPlace && name && (
+        <>
+          <input type="hidden" name={`${name}_lat`} value={selectedPlace.lat} />
+          <input type="hidden" name={`${name}_lon`} value={selectedPlace.lon} />
+        </>
+      )}
+      
+      <input 
+        required={required}
+        name={name}
+        type="text" 
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setShowDropdown(true);
+          setSelectedPlace(null); // Reset selected place if user types
+        }}
+        onFocus={() => setShowDropdown(true)}
+        placeholder={placeholder}
+        className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors placeholder:text-text-dim"
+      />
+      {showDropdown && (query.length >= 3) && recommendations.length > 0 && (
+        <div className="absolute z-50 top-[calc(100%+8px)] left-0 w-full bg-surface border border-white/10 rounded-xl overflow-hidden shadow-2xl max-h-60 overflow-y-auto">
+          {loading ? (
+            <div className="p-4 text-center text-text-muted text-xs">Loading...</div>
+          ) : (
+            <ul className="py-2">
+              {recommendations.map((place) => (
+                <li 
+                  key={place.place_id}
+                  onClick={() => {
+                    setQuery(place.display_name);
+                    setSelectedPlace(place);
+                    setShowDropdown(false);
+                  }}
+                  className="px-4 py-3 hover:bg-white/5 cursor-pointer text-sm text-text-dim hover:text-white transition-colors border-b border-white/5 last:border-0 truncate"
+                  title={place.display_name}
+                >
+                  {place.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {showDropdown && query.length >= 3 && !loading && recommendations.length === 0 && !selectedPlace && (
+        <div className="absolute z-50 top-[calc(100%+8px)] left-0 w-full bg-surface border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+           <div className="p-4 text-center text-text-muted text-xs">No places found.</div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CreateShipmentPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API submission
-    setTimeout(() => {
+    
+    try {
+      const formData = new FormData(e.currentTarget);
+      const data = Object.fromEntries(formData.entries());
+
+      const response = await fetch("/api/shipments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        router.push("/shipments");
+      } else {
+        console.error("Failed to create shipment");
+        // Could add toast notification here later
+      }
+    } catch (error) {
+      console.error("Error creating shipment:", error);
+    } finally {
       setLoading(false);
-      // Let's assume a redirect or a success message here in a real app
-    }, 1500);
+    }
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Link 
@@ -56,28 +196,18 @@ export default function CreateShipmentPage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-4">
-                  Origin Node
-                </label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder="e.g. Hub Central Base"
-                  className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors placeholder:text-text-dim"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-4">
-                  Destination Node
-                </label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder="e.g. Sector 7 Distribution"
-                  className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors placeholder:text-text-dim"
-                />
-              </div>
+              <AddressAutocomplete 
+                label="Origin Node" 
+                name="origin"
+                placeholder="e.g. Hub Central Base" 
+                required 
+              />
+              <AddressAutocomplete 
+                label="Destination Node" 
+                name="destination"
+                placeholder="e.g. Sector 7 Distribution" 
+                required 
+              />
             </div>
           </div>
 
@@ -98,6 +228,7 @@ export default function CreateShipmentPage() {
                 <input 
                   required
                   type="number" 
+                  name="weight_kg"
                   placeholder="0.00"
                   className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors placeholder:text-text-dim tabular-nums"
                 />
@@ -109,6 +240,7 @@ export default function CreateShipmentPage() {
                 <input 
                   required
                   type="number" 
+                  name="volume_m3"
                   placeholder="0.00"
                   className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors placeholder:text-text-dim tabular-nums"
                 />
@@ -117,7 +249,7 @@ export default function CreateShipmentPage() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-4">
                   Cargo Type
                 </label>
-                <select className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors appearance-none">
+                <select name="cargo_type" className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors appearance-none">
                   <option>Standard Freight</option>
                   <option>Perishable Goods</option>
                   <option>Hazardous Materials (Hazmat)</option>
@@ -143,7 +275,7 @@ export default function CreateShipmentPage() {
                 </label>
                 <div className="relative">
                   <ShieldAlert className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
-                  <select className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 pl-12 pr-6 text-white text-sm outline-none focus:border-primary transition-colors appearance-none">
+                  <select name="priority" className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 pl-12 pr-6 text-white text-sm outline-none focus:border-primary transition-colors appearance-none">
                     <option>Standard (SLA 3 Days)</option>
                     <option>Express (SLA 24 Hours)</option>
                     <option>Priority (Same Day Sync)</option>
@@ -158,6 +290,7 @@ export default function CreateShipmentPage() {
                   <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                   <input 
                     type="date" 
+                    name="scheduled_dispatch"
                     className="w-full bg-surface-elevated border border-white/5 rounded-full py-4 pl-12 pr-6 text-white text-sm outline-none focus:border-primary transition-colors [color-scheme:dark]"
                   />
                 </div>
@@ -170,6 +303,7 @@ export default function CreateShipmentPage() {
               </label>
               <textarea 
                 rows={4}
+                name="notes"
                 placeholder="Any specific handling instructions or facility codes..."
                 className="w-full bg-surface-elevated border border-white/5 rounded-[20px] py-4 px-6 text-white text-sm outline-none focus:border-primary transition-colors resize-none placeholder:text-text-dim"
               ></textarea>

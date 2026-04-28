@@ -20,14 +20,14 @@ model User {
   pic       String?
   provider  String
   createdAt DateTime @default(now())
-  role enum{
-    supplier
-    customer
-    driver
-  }
+  role      Role     @default(customer)
 }
 
-
+enum Role {
+  supplier
+  customer
+  driver
+}
 
 enum ShipmentStatus {
   PENDING
@@ -36,6 +36,19 @@ enum ShipmentStatus {
   REROUTED
   DELIVERED
   FAILED
+}
+
+enum CargoType {
+  STANDARD_FREIGHT
+  PERISHABLE_GOODS
+  HAZARDOUS_MATERIALS
+  FRAGILE_ITEMS
+}
+
+enum PriorityClass {
+  STANDARD
+  EXPRESS
+  PRIORITY
 }
 
 enum EventType {
@@ -53,10 +66,27 @@ enum EventType {
 //////////////////////////////////////////////////////
 
 model Shipment {
-  id                 String          @id
+  id                 String          @id @default(cuid())
   source             String
   destination        String
+
+  // Coordinates from Nominatim API
+  source_lat         Float?
+  source_lon         Float?
+  destination_lat    Float?
+  destination_lon    Float?
+
   status             ShipmentStatus  @default(PENDING)
+
+  // Cargo specifications from create form
+  weight_kg          Float?
+  volume_m3          Float?
+  cargo_type         CargoType       @default(STANDARD_FREIGHT)
+  priority           PriorityClass   @default(STANDARD)
+
+  // Scheduling
+  scheduled_dispatch DateTime?
+  notes              String?
 
   current_location   String?
   current_lat        Float?

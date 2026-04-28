@@ -41,3 +41,10 @@ get
 /traffic/map/{versionNumber}/tile/flow/{type}/{zoom}/{x}/{y}.{format}
 Vector Flow Tiles
 
+
+
+const input = "pat";
+
+fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${input}&key=YOUR_API_KEY`)
+  .then(res => res.json())
+  .then(data => console.log(data.predictions));

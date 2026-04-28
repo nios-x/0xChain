@@ -1,0 +1,17 @@
+-- CreateEnum
+CREATE TYPE "CargoType" AS ENUM ('STANDARD_FREIGHT', 'PERISHABLE_GOODS', 'HAZARDOUS_MATERIALS', 'FRAGILE_ITEMS');
+
+-- CreateEnum
+CREATE TYPE "PriorityClass" AS ENUM ('STANDARD', 'EXPRESS', 'PRIORITY');
+
+-- AlterTable
+ALTER TABLE "Shipment" ADD COLUMN     "cargo_type" "CargoType" NOT NULL DEFAULT 'STANDARD_FREIGHT',
+ADD COLUMN     "destination_lat" DOUBLE PRECISION,
+ADD COLUMN     "destination_lon" DOUBLE PRECISION,
+ADD COLUMN     "notes" TEXT,
+ADD COLUMN     "priority" "PriorityClass" NOT NULL DEFAULT 'STANDARD',
+ADD COLUMN     "scheduled_dispatch" TIMESTAMP(3),
+ADD COLUMN     "source_lat" DOUBLE PRECISION,
+ADD COLUMN     "source_lon" DOUBLE PRECISION,
+ADD COLUMN     "volume_m3" DOUBLE PRECISION,
+ADD COLUMN     "weight_kg" DOUBLE PRECISION;

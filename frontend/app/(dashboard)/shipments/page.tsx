@@ -206,11 +206,11 @@ export default function ShipmentsPage() {
                   </td>
                   <td className="px-4 text-sm text-white">{s.source}</td>
                   <td className="px-4 text-sm text-white">{s.destination}</td>
-                  <td className="px-4 text-sm text-text-muted truncate max-w-[160px]">
-                    {s.current_location ?? "—"}
+                  <td className="px-4 text-sm text-text-muted truncate max-w-[160px]" title={s.current_location ?? s.source}>
+                    {s.current_location ?? s.source}
                   </td>
                   <td className="px-4 text-sm text-text-muted tabular-nums">
-                    {formatDate(s.estimated_delivery)}
+                    {s.estimated_delivery ? formatDate(s.estimated_delivery) : "Pending Est."}
                   </td>
                   <td className="px-4">
                     <StatusChip status={CHIP_STATUS_MAP[s.status]} />

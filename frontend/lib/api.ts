@@ -22,6 +22,10 @@ export interface Shipment {
   id: string;
   source: string;
   destination: string;
+  source_lat: number | null;
+  source_lon: number | null;
+  destination_lat: number | null;
+  destination_lon: number | null;
   status: ShipmentStatus;
   current_location: string | null;
   current_lat: number | null;
