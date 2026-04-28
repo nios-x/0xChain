@@ -4,7 +4,7 @@ import "./globals.css";
 import Providers from "./Provider/SessionProvider";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",

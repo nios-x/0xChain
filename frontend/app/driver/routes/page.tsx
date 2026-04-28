@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Truck, Clock, CheckCircle2, ChevronRight, MapPin, Navigation } from "lucide-react";
-import MetricCard from "../../components/MetricCard";
+import { Truck, CheckCircle2, ChevronRight, MapPin, Navigation } from "lucide-react";
+
 
 interface Route {
   id: string;
@@ -61,13 +61,13 @@ export default function MyRoutesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <nav className="flex gap-2 mb-4">
-            <button 
+            <button
               onClick={() => setActiveTab("active")}
               className={`text-[11px] uppercase font-bold tracking-widest px-4 py-1 rounded-full transition-all ${activeTab === "active" ? "bg-primary text-white" : "text-text-dim hover:text-white"}`}
             >
               Current Tasks
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab("history")}
               className={`text-[11px] uppercase font-bold tracking-widest px-4 py-1 rounded-full transition-all ${activeTab === "history" ? "bg-primary text-white" : "text-text-dim hover:text-white"}`}
             >
@@ -114,7 +114,7 @@ export default function MyRoutesPage() {
                       <p className="text-3xl font-black text-white tabular-nums">{activeRoute.progress}%</p>
                     </div>
                   </div>
-                  
+
                   <div className="p-8 space-y-8">
                     {/* Origin & Destination */}
                     <div className="flex items-center justify-between relative">
@@ -182,32 +182,32 @@ export default function MyRoutesPage() {
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                       <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">On-Time Accuracy</span>
-                       <span className="text-sm font-black text-white">96%</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">On-Time Accuracy</span>
+                      <span className="text-sm font-black text-white">96%</span>
                     </div>
                     <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                       <div className="h-full bg-primary rounded-full" style={{ width: '96%' }} />
+                      <div className="h-full bg-primary rounded-full" style={{ width: '96%' }} />
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                       <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Fuel Efficiency</span>
-                       <span className="text-sm font-black text-white">92%</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Fuel Efficiency</span>
+                      <span className="text-sm font-black text-white">92%</span>
                     </div>
                     <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                       <div className="h-full bg-info rounded-full" style={{ width: '92%' }} />
+                      <div className="h-full bg-info rounded-full" style={{ width: '92%' }} />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-gradient-to-br from-surface-elevated to-surface p-8 rounded-xl relative overflow-hidden group">
-                 <div className="relative z-10">
-                    <h3 className="text-2xl font-black text-white tracking-tighter mb-2">Next Shift<br/>Deployment</h3>
-                    <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-6">Tomorrow • 05:00 AM</p>
-                    <button className="px-6 py-2 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white/20 transition-all">Check Specs</button>
-                 </div>
-                 <Truck className="absolute -bottom-4 -right-4 text-white/5 w-32 h-32 group-hover:scale-110 transition-transform duration-500" />
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-black text-white tracking-tighter mb-2">Next Shift<br />Deployment</h3>
+                  <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-6">Tomorrow • 05:00 AM</p>
+                  <button className="px-6 py-2 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white/20 transition-all">Check Specs</button>
+                </div>
+                <Truck className="absolute -bottom-4 -right-4 text-white/5 w-32 h-32 group-hover:scale-110 transition-transform duration-500" />
               </div>
             </div>
           </div>

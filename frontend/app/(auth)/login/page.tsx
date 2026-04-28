@@ -9,13 +9,12 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [role, setRole] = useState<string | null>(null);
-  // Restore previously selected role from localStorage
-  
-  useEffect(() => {
-    const savedRole = localStorage.getItem("user_role");
-    if (savedRole) setRole(savedRole);
-  }, []);
+  const [role, setRole] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("user_role");
+    }
+    return null;
+  });
 
   const getRedirectPath = (userRole: string) => {
     if (userRole === "driver") return "/driver";
@@ -101,8 +100,8 @@ export default function LoginPage() {
                   id="role-customer"
                   onClick={() => handleRoleSelect("customer")}
                   className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "customer"
-                      ? "border-primary bg-surface-container-highest"
-                      : "border-text-dim hover:bg-surface-container-high"
+                    ? "border-primary bg-surface-container-highest"
+                    : "border-text-dim hover:bg-surface-container-high"
                     }`}
                 >
                   <PackageCheck size={18} className="text-primary" />
@@ -116,8 +115,8 @@ export default function LoginPage() {
                   id="role-driver"
                   onClick={() => handleRoleSelect("driver")}
                   className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "driver"
-                      ? "border-primary bg-surface-container-highest"
-                      : "border-text-dim hover:bg-surface-container-high"
+                    ? "border-primary bg-surface-container-highest"
+                    : "border-text-dim hover:bg-surface-container-high"
                     }`}
                 >
                   <Truck size={18} className="text-primary" />
@@ -131,8 +130,8 @@ export default function LoginPage() {
                   id="role-supplier"
                   onClick={() => handleRoleSelect("supplier")}
                   className={`flex items-center gap-3 p-3 rounded-[10px] border transition-all ${role === "supplier"
-                      ? "border-primary bg-surface-container-highest"
-                      : "border-text-dim hover:bg-surface-container-high"
+                    ? "border-primary bg-surface-container-highest"
+                    : "border-text-dim hover:bg-surface-container-high"
                     }`}
                 >
                   <Plane size={18} className="text-primary" />

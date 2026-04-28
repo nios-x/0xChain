@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Popup, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // Fix Leaflet's default icon path issues in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: string })._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -39,7 +40,7 @@ export default function DashboardMapComponent() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
-      
+
       {hubs.map((hub, idx) => (
         <CircleMarker
           key={idx}

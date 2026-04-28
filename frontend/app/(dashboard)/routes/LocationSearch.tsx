@@ -162,18 +162,17 @@ export default function LocationSearch({
       <div className="relative">
         {/* Input */}
         <div
-          className={`flex items-center gap-2 h-[42px] bg-surface-elevated rounded-[6px] px-3 border transition-all ${
-            isSelected
+          className={`flex items-center gap-2 h-[42px] bg-surface-elevated rounded-[6px] px-3 border transition-all ${isSelected
               ? "border-" + (icon === "origin" ? "primary" : icon === "destination" ? "red-500" : "amber-500") + "/60"
               : "border-white/5"
-          } focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20`}
+            } focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20`}
           style={{
             borderColor: isSelected
               ? icon === "origin"
                 ? "rgba(29,185,84,0.5)"
                 : icon === "destination"
-                ? "rgba(239,68,68,0.5)"
-                : "rgba(245,158,11,0.5)"
+                  ? "rgba(239,68,68,0.5)"
+                  : "rgba(245,158,11,0.5)"
               : undefined,
           }}
         >
@@ -225,9 +224,8 @@ export default function LocationSearch({
               return (
                 <button
                   key={i}
-                  className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
-                    i === activeIdx ? "bg-primary/20" : "hover:bg-white/5"
-                  } ${i > 0 ? "border-t border-white/5" : ""}`}
+                  className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${i === activeIdx ? "bg-primary/20" : "hover:bg-white/5"
+                    } ${i > 0 ? "border-t border-white/5" : ""}`}
                   onMouseDown={(e) => { e.preventDefault(); selectResult(r); }}
                   onMouseEnter={() => setActiveIdx(i)}
                 >

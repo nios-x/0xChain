@@ -6,7 +6,18 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
 // ── Fix Leaflet default icon paths ────────────────────────────────────────────
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+// extend the type safely
+type LeafletDefaultIcon = typeof L.Icon.Default & {
+  prototype: {
+    _getIconUrl?: string;
+  };
+};
+
+const DefaultIcon = L.Icon.Default as LeafletDefaultIcon;
+
+delete DefaultIcon.prototype._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
@@ -154,7 +165,7 @@ async function fetchRoute(coords: [number, number][]): Promise<{
     const res = await fetch(`/api/route-proxy?coords=${encodeURIComponent(coordStr)}`);
     const json = await res.json();
     if (json.ok) return json;
-  } catch {}
+  } catch { }
   // straight-line fallback
   const dist = coords.reduce((acc, p, i) => (i === 0 ? 0 : acc + haversine(coords[i - 1], p)), 0);
   return { polyline: coords, distanceMeters: dist, durationSeconds: dist / 22 };
@@ -175,13 +186,18 @@ function RoutingLayer({ waypoints, waypointLabels, onRouteCalculated, animateTru
   const truckRef = useRef<L.Marker | null>(null);
 
   const clearAll = useCallback(() => {
-    layersRef.current.forEach((l) => { try { map.removeLayer(l); } catch {} });
+    layersRef.current.forEach((l) => { try { map.removeLayer(l); } catch { } });
     layersRef.current = [];
     if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = null; }
-    if (truckRef.current) { try { map.removeLayer(truckRef.current); } catch {} truckRef.current = null; }
+    if (truckRef.current) { try { map.removeLayer(truckRef.current); } catch { } truckRef.current = null; }
   }, [map]);
 
-  const add = (l: L.Layer) => { l.addTo(map); layersRef.current.push(l); };
+  const add = useCallback((l: L.Layer) => {
+    if (!map) return;
+    l.addTo(map);
+    layersRef.current.push(l);
+  }, [map]);
+
 
   useEffect(() => {
     if (!map || waypoints.length < 2) return;
@@ -311,7 +327,7 @@ function RoutingLayer({ waypoints, waypointLabels, onRouteCalculated, animateTru
     });
 
     return () => { cancelled = true; clearAll(); };
-  }, [map, waypoints, waypointLabels, onRouteCalculated, animateTruck, clearAll]);
+  }, [map, waypoints, waypointLabels, onRouteCalculated, animateTruck, clearAll, add]);
 
   return null;
 }
